@@ -2,16 +2,16 @@ import requests
 from bs4 import BeautifulSoup
 import pprint
 
-res = requests.get("https://news.ycombinator.com/news?p=2")
-soup = BeautifulSoup(res.text, "html.parser")
-
-links = soup.select(".titleline > a")
-subtext = soup.select(".subtext")
-
+def fetch_hn_page(page_num):
+    url = f"https://news.ycombinator.com/news?p={page_num}"
+    res = requests.get(url)
+    soup = BeautifulSoup(res.text, "html.parser")
+    links = soup.select(".titleline > a")
+    subtext = soup.select(".subtext")
+    return links, subtext
 
 def sort_stories_by_votes(hnlist):
     return sorted(hnlist, key=lambda k: k['votes'], reverse=True)
-
 
 def create_custom_hn(links, subtext):
     hn = []
@@ -23,7 +23,15 @@ def create_custom_hn(links, subtext):
             points = int(vote[0].getText().replace(" points", ""))
             if points > 99:
                 hn.append({"title": title, "link": href, "votes": points})
-    return sort_stories_by_votes(hn)
+    return hn
 
+# Loop through multiple pages
+all_stories = []
+for page in range(1, 10):  # Scrape pages 1 to 3
+    links, subtext = fetch_hn_page(page)
+    page_stories = create_custom_hn(links, subtext)
+    all_stories.extend(page_stories)
 
-pprint.pprint(create_custom_hn(links, subtext))
+# Sort & display all results
+sorted_stories = sort_stories_by_votes(all_stories)
+pprint.pprint(sorted_stories)
